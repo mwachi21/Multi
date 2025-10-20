@@ -1,0 +1,10 @@
+# Multimedia
+Downloads/
+
+# Compiled Python Flask
+config.py
+*.log
+venv/
+.venv/
+*.pyc
+__pycache__/

@@ -1,0 +1,72 @@
+<!DOCTYPE html>
+<html lang="en">
+    <head>
+        <meta charset="utf-8" />
+        <meta name="viewport" content="width=device-width,initial-scale=1" />
+        <title>Download Progress</title>
+        <script src="https://cdn.tailwindcss.com"></script>
+    </head>
+    <body class="bg-gray-100 min-h-screen flex items-center justify-center p-6">
+        <div class="bg-white rounded-lg shadow-lg w-full max-w-3xl p-6">
+            <div class="flex flex-col md:flex-row md:items-center gap-6">
+                <div class="flex-1">
+                    <h2 class="text-xl font-semibold">Downloading</h2>
+                    <p class="text-sm text-gray-600 mt-1">File: <span class="font-medium">{{ filename }}</span></p>
+
+                    <div class="mt-4">
+                        <div class="w-full bg-gray-200 rounded overflow-hidden h-4">
+                            <div id="progress-bar" class="bg-indigo-600 h-4 rounded" style="width:0%"></div>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-600 mt-2">
+                            <div id="status">Starting</div>
+                            <div id="percent">0%</div>
+                        </div>
+                        <div class="flex justify-between text-sm text-gray-600 mt-2">
+                            <div>Speed: <span id="speed">0 B/s</span></div>
+                            <div>ETA: <span id="eta">--</span></div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="w-full md:w-64 text-center">
+                    <a id="download-link" href="{{ url_for('download_file', filename=filename) }}" class="hidden inline-block px-4 py-2 bg-green-600 text-white rounded">Download File</a>
+                    <p class="text-sm text-gray-500 mt-3"><a href="/" class="underline">← Home</a></p>
+                </div>
+            </div>
+
+            <div class="mt-4 text-xs text-gray-400">This page updates automatically. Close when the download is finished.</div>
+        </div>
+
+        <script>
+            async function fetchProgress() {
+                try {
+                    const res = await fetch('/progress/{{ video_id }}');
+                    const data = await res.json();
+                    const status = (data.status || 'starting').toString();
+                    const percent = Number(data.percent || 0);
+
+                    document.getElementById('status').innerText = status.toUpperCase();
+                    document.getElementById('percent').innerText = percent + '%';
+                    document.getElementById('progress-bar').style.width = percent + '%';
+
+                    if (status === 'finished') {
+                        document.getElementById('download-link').classList.remove('hidden');
+                        clearInterval(poll);
+                    }
+                    if (status === 'error') {
+                        document.getElementById('status').innerText = 'ERROR: ' + (data.message || 'Unknown');
+                        clearInterval(poll);
+                    }
+                    // show speed and eta if present
+                    if (data.speed_text) document.getElementById('speed').innerText = data.speed_text;
+                    if (data.eta_text) document.getElementById('eta').innerText = data.eta_text;
+                } catch (e) {
+                    console.error(e);
+                }
+            }
+
+            const poll = setInterval(fetchProgress, 1000);
+            window.addEventListener('load', fetchProgress);
+        </script>
+    </body>
+</html>
