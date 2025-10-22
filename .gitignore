@@ -6,5 +6,5 @@ config.py
 *.log
 venv/
 .venv/
-*.pyc
-__pycache__/
+# *.pyc
+# __pycache__/
